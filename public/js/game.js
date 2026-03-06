@@ -123,8 +123,12 @@ export const scoreHand = hand => findBestAssignment(hand).score;
 export const canHaBai  = hand => !!(hand&&hand.length>=9&&findBestAssignment(hand).leftover.length===0);
 
 export function getPlayerSide(playerIdx) {
-  const rel = ((playerIdx - S.myIndex) + S.numPlayers) % S.numPlayers;
-  return ['bottom','left','top','right'][rel] || 'bottom';
+  const SIDES = {
+    2: ['bottom','top'],
+    3: ['bottom','left','top'],
+    4: ['bottom','left','top','right'],
+  };
+  return (SIDES[S.numPlayers]||SIDES[4])[playerIdx] || 'bottom';
 }
 
 // ════════════════════════════════════════════════════════════

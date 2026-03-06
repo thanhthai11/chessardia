@@ -270,7 +270,8 @@ function registerHandlers(io, socket) {
 
     if (result.waitForAction) {
       // Quân thường: tay 8, tính ô có thể ăn
-      const playerSide = ['bottom', 'left', 'top', 'right'][playerIdx % 4];
+      const _sides = {2:['bottom','top'],3:['bottom','left','top'],4:['bottom','left','top','right']};
+      const playerSide = (_sides[gs.numPlayers]||_sides[4])[playerIdx] || 'bottom';
       const attackSquares = getAttackSquares(placedCard, action.row, action.col, gs.board, playerSide);
       if (attackSquares.length === 0) {
         // Không ăn được → tự bốc (8→9), kết thúc lượt
