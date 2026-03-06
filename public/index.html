@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chessardia</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LOBBY OVERLAY (phủ toàn màn hình)
+════════════════════════════════════════════════════════════ -->
+<div id="lobby-overlay" class="overlay">
+
+  <!-- MENU CHÍNH -->
+  <div id="screen-menu" class="lobby-screen">
+    <h1 class="logo">♟ Chessardia</h1>
+    <p class="logo-sub">Game bài cờ vua</p>
+    <input id="input-name" type="text" placeholder="Tên của bạn" maxlength="20" class="input-field">
+    <div class="btn-group">
+      <button id="btn-create" class="btn btn-gold">✦ Tạo phòng</button>
+      <button id="btn-show-join" class="btn btn-ghost">⊞ Vào phòng</button>
+      <button id="btn-show-offline" class="btn btn-ghost">🤖 Chơi offline</button>
+    </div>
+    <div id="join-row" class="hidden">
+      <input id="input-roomid" type="text" placeholder="Mã phòng (VD: ABC123)" maxlength="6" class="input-field" style="text-transform:uppercase">
+      <button id="btn-join" class="btn btn-gold">Vào phòng</button>
+    </div>
+    <p id="lobby-error" class="error-text"></p>
+  </div>
+
+  <!-- OFFLINE SETUP -->
+  <div id="screen-offline" class="lobby-screen hidden">
+    <h2>🤖 Chơi offline</h2>
+    <div class="setting-row">
+      <label>Số bot:</label>
+      <div class="btn-group-small">
+        <button class="btn-num active" data-bots="1">1</button>
+        <button class="btn-num" data-bots="2">2</button>
+        <button class="btn-num" data-bots="3">3</button>
+      </div>
+    </div>
+    <div id="bot-difficulty-rows"></div>
+    <div class="setting-row">
+      <label>Số màu bài:</label>
+      <div class="btn-group-small">
+        <button class="btn-num" data-colors="3">3 màu</button>
+        <button class="btn-num active" data-colors="4">4 màu</button>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button id="btn-start-offline" class="btn btn-gold">▶ Bắt đầu</button>
+      <button id="btn-back-menu" class="btn btn-ghost">← Quay lại</button>
+    </div>
+  </div>
+
+  <!-- WAITING ROOM -->
+  <div id="screen-waiting" class="lobby-screen hidden">
+    <h2>Phòng chờ</h2>
+    <div class="room-code-row">
+      <span>Mã phòng: </span>
+      <span id="wr-roomid" class="room-code"></span>
+      <button id="btn-copy-link" class="btn-small">📋 Copy link</button>
+    </div>
+    <div id="settings-row" class="setting-row hidden">
+      <label>Số màu:</label>
+      <div class="btn-group-small">
+        <button id="btn-3colors" class="btn-num" data-colors="3">3 màu</button>
+        <button id="btn-4colors" class="btn-num active" data-colors="4">4 màu</button>
+      </div>
+    </div>
+    <div id="player-slots"></div>
+    <div class="btn-group">
+      <button id="btn-ready" class="btn btn-ghost">Sẵn sàng</button>
+      <button id="btn-start-online" class="btn btn-gold hidden">▶ Bắt đầu!</button>
+    </div>
+    <p id="wr-error" class="error-text"></p>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     BÀN CHƠI
+════════════════════════════════════════════════════════════ -->
+<div id="game-screen" class="hidden">
+
+  <!-- Tên đối thủ trên -->
+  <div id="zone-top" class="player-zone zone-top hidden">
+    <div class="opponent-hand" id="hand-top"></div>
+    <div class="player-name" id="name-top"></div>
+  </div>
+
+  <!-- Tên đối thủ trái -->
+  <div id="zone-left" class="player-zone zone-left hidden">
+    <div class="player-name" id="name-left"></div>
+    <div class="opponent-hand vertical" id="hand-left"></div>
+  </div>
+
+  <!-- Khu giữa: bàn + chồng bài -->
+  <div id="zone-center">
+    <div id="turn-banner" class="turn-banner"></div>
+    <div id="board" class="board"></div>
+    <div id="draw-pile-area">
+      <div id="draw-pile-btn" class="draw-pile">
+        <img src="assets/matsau.jpg" onerror="this.style.display='none'" alt="Chồng bài">
+        <span id="draw-count">0</span>
+      </div>
+      <div id="phase-text" class="phase-text"></div>
+    </div>
+  </div>
+
+  <!-- Tên đối thủ phải -->
+  <div id="zone-right" class="player-zone zone-right hidden">
+    <div class="opponent-hand vertical" id="hand-right"></div>
+    <div class="player-name" id="name-right"></div>
+  </div>
+
+  <!-- Tay bài của tôi -->
+  <div id="zone-bottom" class="player-zone zone-bottom">
+    <div class="player-name" id="name-bottom"></div>
+    <div id="my-hand" class="my-hand"></div>
+    <div class="action-btns">
+      <button id="btn-ha-bai" class="btn btn-gold hidden">🏆 Hạ bài</button>
+      <button id="btn-sort"   class="btn btn-ghost">⇅ Xếp bài</button>
+    </div>
+  </div>
+
+  <!-- Feed thông báo action (góc trên phải) -->
+  <div id="action-feed" class="action-feed"></div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     OVERLAY: Inspector (xem chồng bài 1 ô)
+════════════════════════════════════════════════════════════ -->
+<div id="inspector-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Chồng bài ô này</h3>
+    <div id="inspector-cards" class="card-row"></div>
+    <button id="btn-close-inspector" class="btn btn-ghost">Đóng</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     OVERLAY: Cung Tên — chọn hành động
+════════════════════════════════════════════════════════════ -->
+<div id="cungten-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>🏹 Cung Tên</h3>
+    <p>Chọn hành động:</p>
+    <div id="cungten-targets" class="target-list"></div>
+    <button id="btn-cungten-draw" class="btn btn-ghost">Bốc từ chồng úp</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     OVERLAY: Kết quả
+════════════════════════════════════════════════════════════ -->
+<div id="result-overlay" class="modal-overlay hidden">
+  <div class="modal modal-wide">
+    <h2 id="result-winner"></h2>
+    <div id="result-scores"></div>
+    <button id="btn-play-again" class="btn btn-gold">Chơi lại</button>
+    <button id="btn-back-to-menu" class="btn btn-ghost">Menu</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
