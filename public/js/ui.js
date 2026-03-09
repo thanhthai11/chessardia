@@ -425,3 +425,96 @@ export function renderBotDifficultyRows(numBots) {
     container.appendChild(row);
   }
 }
+// ══════════════════════════════════════════════════════════════
+// ATTACK EFFECTS
+// ══════════════════════════════════════════════════════════════
+
+// Cấp độ flash theo loại quân
+const FLASH_CLASS = {
+  tot: 'flash-tot', ma: 'flash-ma', tinh: 'flash-tinh',
+  xe: 'flash-xe', hau: 'flash-hau', vua: 'flash-vua',
+};
+const FLASH_SIZE = {
+  tot: 120, ma: 160, tinh: 160, xe: 200, hau: 260, vua: 320,
+};
+const SHAKE_TYPES = ['xe','hau','vua','ma','tinh'];
+const STAR_TYPES  = ['hau','vua'];
+
+export function playAttackEffect(cardType, cellEl, handEl) {
+  if (!cellEl) return;
+  const cellRect = cellEl.getBoundingClientRect();
+  const cx = cellRect.left + cellRect.width / 2;
+  const cy = cellRect.top + cellRect.height / 2;
+
+  // 1. Flash tại ô bị ăn
+  const fClass = FLASH_CLASS[cardType] || 'flash-tot';
+  const fSize  = FLASH_SIZE[cardType]  || 120;
+  const flash  = document.createElement('div');
+  flash.className = `attack-flash ${fClass}`;
+  flash.style.cssText = `
+    width:${fSize}px; height:${fSize}px;
+    left:${cx - fSize/2}px; top:${cy - fSize/2}px;
+  `;
+  document.body.appendChild(flash);
+  flash.addEventListener('animationend', () => flash.remove());
+
+  // 2. Shake ô
+  if (SHAKE_TYPES.includes(cardType)) {
+    cellEl.classList.add('cell-shake');
+    setTimeout(() => cellEl.classList.remove('cell-shake'), 400);
+  }
+
+  // 3. Star burst cho Hậu/Vua
+  if (STAR_TYPES.includes(cardType)) {
+    const stars = cardType === 'vua' ? 8 : 5;
+    const emojis = ['✨','⭐','💫','🌟'];
+    for (let i = 0; i < stars; i++) {
+      const star = document.createElement('div');
+      star.className = 'star-burst';
+      const angle = (i / stars) * Math.PI * 2;
+      const dist  = 60 + Math.random() * 60;
+      star.style.cssText = `
+        left:${cx}px; top:${cy}px;
+        --sx:${Math.cos(angle)*dist}px;
+        --sy:${Math.sin(angle)*dist}px;
+        animation-delay:${i*0.05}s;
+      `;
+      star.textContent = emojis[i % emojis.length];
+      document.body.appendChild(star);
+      star.addEventListener('animationend', () => star.remove());
+    }
+  }
+
+  // 4. Lá bài bay về tay
+  if (!handEl) return;
+  const handRect = handEl.getBoundingClientRect();
+  const tx = handRect.left + handRect.width / 2;
+  const ty = handRect.top + handRect.height / 2;
+
+  // Delay nhỏ để flash thấy trước
+  const delay = cardType === 'vua' ? 150 : cardType === 'hau' ? 120 : 80;
+  setTimeout(() => {
+    const fly = document.createElement('div');
+    fly.className = 'card-fly';
+    const endX = tx - cx;
+    const endY = ty - cy;
+    // Mid point: bay lên cao trước rồi mới về tay
+    const midX = endX * 0.3 + (Math.random() - 0.5) * 60;
+    const midY = endY * 0.3 - 80 - Math.random() * 40;
+    const rotMid = (Math.random() - 0.5) * 30;
+    const rotEnd = (Math.random() - 0.5) * 60;
+    const duration = 0.5 + (FLASH_SIZE[cardType] || 120) / 600;
+
+    fly.style.cssText = `
+      width:80px; height:112px;
+      left:${cx - 40}px; top:${cy - 56}px;
+      background: linear-gradient(135deg, #2a4a8a, #1a3a7a);
+      --mid-x:${midX}px; --mid-y:${midY}px;
+      --end-x:${endX}px; --end-y:${endY}px;
+      --rot-mid:${rotMid}deg; --rot-end:${rotEnd}deg;
+      --fly-duration:${duration}s;
+    `;
+    document.body.appendChild(fly);
+    fly.addEventListener('animationend', () => fly.remove());
+  }, delay);
+}

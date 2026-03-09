@@ -9,7 +9,7 @@ import { S, setState, onStateChange, canPlace, getAttackSquares, getPlayerSide,
   canHaBai, offlinePlaceCard, offlineAttack, offlineDraw, offlineSteal,
   offlineAdvanceTurn, offlineEndGame } from './game.js';
 import { renderAll, renderBotDifficultyRows, toast, openInspector,
-  openCungTen, showResult, showScreen, pushFeed } from './ui.js';
+  openCungTen, showResult, showScreen, pushFeed, playAttackEffect } from './ui.js';
 import { initSocket, connectAndCreate, connectAndJoin, sendReady,
   sendSettings, sendStart, sendAction } from './socket.js';
 import { botTakeTurn } from './bot.js';
@@ -197,6 +197,12 @@ function doPlaceCard(r, c) {
 // ── ACT2b: Ăn quân ───────────────────────────────────────────
 function doAttack(r, c) {
   if (S.mode === 'offline') {
+    // Play effect trước khi update state
+    const cellEl = document.querySelector(`.board-cell[data-r='${r}'][data-c='${c}']`);
+    const handEl = document.getElementById('my-hand');
+    const topCard = S.board[r][c]?.at(-1);
+    if (topCard) playAttackEffect(topCard.type, cellEl, handEl);
+
     const result = offlineAttack(S.myIndex, r, c); // 8→9
     if (!result.ok) { toast(result.error); return; }
     pushFeed({ type:'attack', player:S.myIndex, taken:result.taken, row:r, col:c }, S.players);
@@ -241,6 +247,14 @@ document.getElementById('btn-ha-bai').addEventListener('click', () => {
 });
 
 // ── Sort bài ─────────────────────────────────────────────────
+
+// ── Nút thoát về menu ────────────────────────────────────────
+document.getElementById('btn-exit-game')?.addEventListener('click', () => {
+  if (!confirm('Thoát về menu? Ván đang chơi sẽ kết thúc.')) return;
+  // Reset state
+  location.reload();
+});
+
 document.getElementById('btn-sort').addEventListener('click', () => {
   const ORDER  = ['vua','hau','xe','ma','tinh','tot','phong_hau','cung_ten'];
   const COLORS = ['red','black','green','blue'];
@@ -286,6 +300,12 @@ document.getElementById('btn-show-offline').addEventListener('click', () => {
   renderBotDifficultyRows(S.offlineBots);
 });
 document.getElementById('btn-back-menu').addEventListener('click', () => showScreen('screen-menu'));
+
+document.getElementById('btn-leave-room')?.addEventListener('click', () => {
+  showScreen('screen-menu');
+  location.reload();
+});
+
 
 document.querySelectorAll('[data-bots]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -374,7 +394,7 @@ onStateChange(() => {
 });
 
 // ── Init socket ───────────────────────────────────────────────
-initSocket({ onCardClick, onSlotClick, onPlayAgain, onMenu });
+initSocket({ onCardClick, onSlotClick, onReorder, onPlayAgain, onMenu });
 
 // ── Auto-join từ URL ──────────────────────────────────────────
 const params     = new URLSearchParams(window.location.search);
